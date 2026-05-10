@@ -1,23 +1,29 @@
-import 'dart:convert';
-
 import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart';
 
+import 'data/asset_booking_schedule_repository.dart';
+import 'data/booking_schedule_load_exception.dart';
+import 'domain/booking_schedule_repository.dart';
 import 'models.dart';
 import 'slot_generator.dart';
 
+/// Контролер екрана: залежить від [BookingScheduleRepository], а не від assets напряму.
 class BookingController extends ChangeNotifier {
-  BookingController();
+  BookingController({
+    BookingScheduleRepository? repository,
+    String assetPath = 'assets/booking_schedule.json',
+  }) : _repository = repository ?? AssetBookingScheduleRepository(assetPath: assetPath);
+
+  final BookingScheduleRepository _repository;
 
   BookingScheduleData? _data;
-  Object? loadError;
+  BookingScheduleLoadException? loadError;
+  bool loading = false;
 
   ServiceItem? _selectedService;
   DateTime? _selectedDate;
   int? _selectedStartMinutes;
 
-  bool _loaded = false;
-  bool get isLoaded => _loaded;
+  bool get isLoaded => _data != null;
 
   BookingScheduleData? get data => _data;
   ServiceItem? get selectedService => _selectedService;
@@ -37,22 +43,33 @@ class BookingController extends ChangeNotifier {
     );
   }
 
-  Future<void> loadFromAssets(String assetPath) async {
+  Future<void> loadSchedule() async {
     loadError = null;
+    loading = true;
+    notifyListeners();
+
     try {
-      final raw = await rootBundle.loadString(assetPath);
-      final map = json.decode(raw) as Map<String, dynamic>;
-      _data = BookingScheduleData.fromJson(map);
-      _selectedService = _data!.services.isNotEmpty ? _data!.services.first : null;
+      final schedule = await _repository.loadSchedule();
+      _data = schedule;
+      _selectedService = schedule.services.isNotEmpty ? schedule.services.first : null;
       _selectedDate = dateOnly(DateTime.now());
       _selectedStartMinutes = null;
-      _loaded = true;
-    } catch (e, st) {
+    } on BookingScheduleLoadException catch (e, st) {
+      _data = null;
       loadError = e;
-      _loaded = false;
+      debugPrint('BookingScheduleLoadException: ${e.userMessage}\n${e.cause}\n$st');
+    } catch (e, st) {
+      _data = null;
+      loadError = BookingScheduleLoadException(
+        'Неочікувана помилка під час завантаження розкладу.',
+        cause: e,
+        technicalDetails: st.toString(),
+      );
       debugPrint('Booking load error: $e\n$st');
+    } finally {
+      loading = false;
+      notifyListeners();
     }
-    notifyListeners();
   }
 
   void selectService(ServiceItem? s) {
@@ -72,7 +89,6 @@ class BookingController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// JSON для підтвердження запису.
   Map<String, String>? buildConfirmationPayload() {
     final d = _data;
     final svc = _selectedService;

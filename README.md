@@ -22,6 +22,12 @@ flutter run
 ```bash
 flutter test
 ```
+
+## Скріншот
+
+[(docs/screenshot.png)](assets/screen.png)
+
+
 ## Ключові рішення
 
 1. **Керування станом — `ChangeNotifier` (`BookingController`)**  
@@ -37,13 +43,32 @@ flutter test
    У консоль (`debugPrint`) і в **SnackBar** виводиться JSON: `serviceId`, `date`, `startTime`, `endTime`.
 
 4. **Недоступні слоти**  
-   `FilterChip` з `onSelected: null`; причина в **`Tooltip`** з `TooltipTriggerMode.tap`, щоб на тачскріні можна було швидко подивитись підказку.
+   Для недоступних часів — **`Tooltip`** з `TooltipTriggerMode.tap`.
+
+5. **Шар даних і помилки JSON**  
+   UI не читає asset напряму: **`BookingScheduleRepository`** → за замовчуванням **`AssetBookingScheduleRepository`**. Рядок проходить **`BookingScheduleParser`** і **`BookingScheduleValidator`** (ручні перевірки схеми й часів). Помилки як **`BookingScheduleLoadException`** з текстом для користувача; на екрані — кнопка **«Спробувати знову»** та згорнутий блок технічних деталей. Для API достатньо реалізувати той самий інтерфейс репозиторію й передати його в **`BookingController(repository: …)`**.
 
 ## Структура коду
 
-- `lib/booking/models.dart` — моделі та парсинг JSON.  
+- `lib/booking/models.dart` — моделі та мапінг полів JSON.  
+- `lib/booking/domain/booking_schedule_repository.dart` — контракт джерела розкладу.  
+- `lib/booking/data/asset_booking_schedule_repository.dart` — завантаження з Flutter assets.  
+- `lib/booking/data/booking_schedule_parser.dart` — JSON decode + виклик валідатора + `BookingScheduleData.fromJson`.  
+- `lib/booking/data/booking_schedule_validator.dart` — ручна валідація полів і логіки (години, перерви всередині дня, послуги, записи).  
+- `lib/booking/data/booking_schedule_load_exception.dart` — помилка з `userMessage` / `technicalDetails`.  
 - `lib/booking/slot_generator.dart` — алгоритм сітки слотів.  
-- `lib/booking/booking_controller.dart` — завантаження asset, вибір послуги/дати/слота.  
+- `lib/booking/booking_controller.dart` — стан екрана; залежить від репозиторію.  
 - `lib/booking/new_booking_screen.dart` — UI «Новий запис».  
 - `test/slot_generator_test.dart` — unit-тести алгоритму (**7** сценаріїв).  
-- `test/booking_fixture_test.dart` — парсинг фікстури з assets.
+- `test/booking_fixture_test.dart` — парсер + фікстура з assets.  
+- `test/booking_schedule_parser_test.dart`, `test/booking_schedule_validator_test.dart` — негативні кейси валідації.
+
+## Що б доробив, якби було більше часу
+
+- **Демо без підганяння дати** — опційний параметр «опорна дата» (debug-меню або `--dart-define`), щоб фікстура з ТЗ завжди потрапляла у видимі 7 днів без зміни системного часу.
+- **Віджет- та інтеграційні тести** — тап по послузі/даті, перерахунок сітки, підтвердження й перевірка SnackBar / логів.
+- **Golden-тести** — фіксація вигляду сітки слотів для регресій у верстці.
+- **Доступність** — `Semantics`, порядок фокусу, контраст disabled-слотів, озвучування причини недоступності без лише tooltip.
+- **Анімації та стан завантаження** — легкий shimmer/skeleton під час читання asset (зараз лише індикатор).
+- **Локалізація** — винесення рядків у ARB (`intl`), формат дати за локаллю.
+- **Відео для README** — короткий запис екрану (зміна послуги, disabled-слот із підказкою, успішне підтвердження з JSON).

@@ -1,17 +1,14 @@
-import 'dart:convert';
-
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:testt/booking/models.dart';
+import 'package:testt/booking/data/booking_schedule_parser.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  test('Фікстура assets/booking_schedule.json збігається з ТЗ і парситься', () async {
+  test('Фікстура assets/booking_schedule.json збігається з ТЗ і проходить парсер + валідацію', () async {
     final raw = await rootBundle.loadString('assets/booking_schedule.json');
-    final map = json.decode(raw) as Map<String, dynamic>;
-    final data = BookingScheduleData.fromJson(map);
+    final data = BookingScheduleParser.parse(raw);
 
     expect(data.workingHours.start, '10:00');
     expect(data.workingHours.end, '20:00');
