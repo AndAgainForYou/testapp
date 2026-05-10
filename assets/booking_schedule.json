@@ -1,0 +1,23 @@
+{
+  "workingHours": {
+    "start": "10:00",
+    "end": "20:00",
+    "breaks": [
+      { "start": "14:00", "end": "15:00", "label": "Обід" }
+    ]
+  },
+  "bufferMinutes": 15,
+  "services": [
+    { "id": "s1", "name": "Манікюр", "durationMinutes": 60 },
+    { "id": "s2", "name": "Педикюр", "durationMinutes": 90 },
+    { "id": "s3", "name": "Брови", "durationMinutes": 30 },
+    { "id": "s4", "name": "Комплекс манікюр+педикюр", "durationMinutes": 150 }
+  ],
+  "appointments": [
+    { "id": "a1", "date": "2026-04-28", "start": "11:00", "end": "12:00", "clientName": "Олена" },
+    { "id": "a2", "date": "2026-04-28", "start": "15:30", "end": "16:30", "clientName": "Ірина" },
+    { "id": "a3", "date": "2026-04-29", "start": "10:00", "end": "11:30", "clientName": "Марія" },
+    { "id": "a4", "date": "2026-04-29", "start": "13:00", "end": "14:00", "clientName": "Ольга" },
+    { "id": "a5", "date": "2026-04-30", "start": "18:00", "end": "19:30", "clientName": "Тетяна" }
+  ]
+}
